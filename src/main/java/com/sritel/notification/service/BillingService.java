@@ -13,16 +13,16 @@ import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
 
-import static com.sritel.notification.service.GeneratePdf.generatePDFStatement;
+import static com.sritel.notification.util.GeneratePdf.generatePDFStatement;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class NotificationService {
+public class BillingService {
     private final JavaMailSender javaMailSender;
 
     @KafkaListener(topics = "monthly-statement")
-    public void listen(MonthlyStatementEvent monthlyStatementEvent) {
+    public void listenMonthlyStatement(MonthlyStatementEvent monthlyStatementEvent) {
         try {
             log.info("Got message from monthly-statement topic {}", monthlyStatementEvent);
 
@@ -31,13 +31,16 @@ public class NotificationService {
                 messageHelper.setTo(monthlyStatementEvent.getEmail().toString());
                 messageHelper.setSubject(String.format("%s Month Statement", monthlyStatementEvent.getMonth()));
                 messageHelper.setText(String.format("""
-                        Hi %s %s,
-                                            
-                        Your monthly statement.
-                                            
-                        Best Regards,
-                        Sri Tel.
-                        """, monthlyStatementEvent.getFirstName().toString(), monthlyStatementEvent.getLastName().toString()));
+                                 Hi %s %s,
+                                                    \s
+                                 We hope you're doing well! Attached, you'll find your monthly statement for %s.
+                                 You can review all the transaction details in the attached PDF.
+                                                    \s
+                                 Best Regards,
+                                 SriTel Team.
+                                \s""", monthlyStatementEvent.getFirstName(),
+                        monthlyStatementEvent.getLastName(),
+                        monthlyStatementEvent.getMonth()));
 
                 // Generate PDF statement
                 ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
